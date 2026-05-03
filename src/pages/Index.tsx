@@ -4,6 +4,7 @@ import Mission from "@/components/Mission";
 import Causes from "@/components/Causes";
 import Impact from "@/components/Impact";
 import Donate from "@/components/Donate";
+import Donors from "@/components/Donors";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -14,6 +15,7 @@ const Index = () => {
       <Mission />
       <Causes />
       <Impact />
+      <Donors />
       <Donate />
       <Footer />
     </main>
