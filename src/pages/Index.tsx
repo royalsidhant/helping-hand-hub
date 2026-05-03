@@ -5,6 +5,7 @@ import Causes from "@/components/Causes";
 import Impact from "@/components/Impact";
 import Donate from "@/components/Donate";
 import Donors from "@/components/Donors";
+import Feedback from "@/components/Feedback";
 import Footer from "@/components/Footer";
 
 const Index = () => {
@@ -17,6 +18,7 @@ const Index = () => {
       <Impact />
       <Donors />
       <Donate />
+      <Feedback />
       <Footer />
     </main>
   );
