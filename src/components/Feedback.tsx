@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 const feedbackSchema = z.object({
   name: z.string().trim().min(2, "Name is too short").max(100, "Name must be under 100 characters"),
@@ -36,14 +37,26 @@ const Feedback = () => {
     }
     setErrors({});
     setSubmitting(true);
-    setTimeout(() => {
+    const { error } = await supabase.from("feedback").insert({
+      name: result.data.name,
+      email: result.data.email,
+      address: result.data.address,
+      message: result.data.message,
+    });
+    setSubmitting(false);
+    if (error) {
       toast({
-        title: "Thank you for your feedback! 💛",
-        description: "Your kind words inspire us to do more.",
+        title: "Couldn't send feedback",
+        description: error.message,
+        variant: "destructive",
       });
-      setForm({ name: "", address: "", email: "", message: "" });
-      setSubmitting(false);
-    }, 600);
+      return;
+    }
+    toast({
+      title: "Thank you for your feedback! 💛",
+      description: "Your kind words inspire us to do more.",
+    });
+    setForm({ name: "", address: "", email: "", message: "" });
   };
 
   return (
