@@ -1,6 +1,10 @@
 import { useState } from "react";
-import { Copy, Check, Smartphone, QrCode, ShieldCheck } from "lucide-react";
+import { Copy, Check, Smartphone, QrCode, ShieldCheck, HeartHandshake } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 import qrImg from "@/assets/donation-qr.png";
 
 const UPI_ID = "helpinghand@upi";
@@ -9,11 +13,34 @@ const amounts = [101, 501, 1100, 2500, 5000];
 const Donate = () => {
   const [copied, setCopied] = useState(false);
   const [selected, setSelected] = useState<number>(501);
+  const [donor, setDonor] = useState({ name: "", email: "", txn: "" });
+  const [saving, setSaving] = useState(false);
 
   const copy = async () => {
     await navigator.clipboard.writeText(UPI_ID);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const recordDonation = async () => {
+    if (donor.name.trim().length < 2) {
+      toast({ title: "Please enter your name", variant: "destructive" });
+      return;
+    }
+    setSaving(true);
+    const { error } = await supabase.from("donations").insert({
+      donor_name: donor.name.trim(),
+      donor_email: donor.email.trim() || null,
+      amount: selected,
+      transaction_ref: donor.txn.trim() || null,
+    });
+    setSaving(false);
+    if (error) {
+      toast({ title: "Couldn't record donation", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Thank you for your generosity! 💛", description: "Your contribution has been recorded." });
+    setDonor({ name: "", email: "", txn: "" });
   };
 
   return (
@@ -28,7 +55,6 @@ const Donate = () => {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6 max-w-5xl mx-auto">
-          {/* QR Card */}
           <div className="rounded-3xl bg-card border border-border shadow-card p-8 md:p-10 text-center">
             <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-primary mb-4">
               <QrCode className="w-4 h-4" /> Scan to Pay
@@ -42,7 +68,6 @@ const Donate = () => {
             <p className="mt-6 text-sm text-muted-foreground">Works with GPay, PhonePe, Paytm, BHIM &amp; all UPI apps</p>
           </div>
 
-          {/* UPI Card */}
           <div className="rounded-3xl bg-card border border-border shadow-card p-8 md:p-10">
             <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-widest text-primary mb-4">
               <Smartphone className="w-4 h-4" /> UPI ID
@@ -88,6 +113,36 @@ const Donate = () => {
               Secure · Encrypted · 80G tax exemption available
             </div>
           </div>
+        </div>
+
+        {/* Record donation form */}
+        <div className="max-w-5xl mx-auto mt-10 rounded-3xl bg-card border border-border shadow-card p-8 md:p-10">
+          <div className="flex items-center gap-3 mb-2">
+            <span className="grid place-items-center w-10 h-10 rounded-xl bg-gradient-gold">
+              <HeartHandshake className="w-5 h-5 text-primary" />
+            </span>
+            <h3 className="font-display text-2xl font-bold">Confirm your donation</h3>
+          </div>
+          <p className="text-sm text-muted-foreground mb-6">
+            Already paid? Share your details so we can issue a receipt and add you to our donor wall.
+          </p>
+          <div className="grid md:grid-cols-3 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="d-name">Full name</Label>
+              <Input id="d-name" value={donor.name} onChange={(e) => setDonor({ ...donor, name: e.target.value })} placeholder="Jane Doe" maxLength={100} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="d-email">Email (optional)</Label>
+              <Input id="d-email" type="email" value={donor.email} onChange={(e) => setDonor({ ...donor, email: e.target.value })} placeholder="you@example.com" maxLength={255} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="d-txn">UPI transaction ID (optional)</Label>
+              <Input id="d-txn" value={donor.txn} onChange={(e) => setDonor({ ...donor, txn: e.target.value })} placeholder="e.g. 4567890123" maxLength={100} />
+            </div>
+          </div>
+          <Button onClick={recordDonation} variant="hero" size="lg" className="mt-6" disabled={saving}>
+            {saving ? "Recording..." : `Record ₹${selected.toLocaleString("en-IN")} donation`}
+          </Button>
         </div>
       </div>
     </section>
